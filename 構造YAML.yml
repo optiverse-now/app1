@@ -1,0 +1,1125 @@
+application:
+  name: ai-tdd-diary-app1
+  description: 日記アプリ
+  package_manager: npm
+  technical_stack:
+    frontend:
+      name: Next.js
+      version: 15
+      language: TypeScript
+      ui_library: shadcn/ui
+      css_framework: Tailwind CSS
+      routing: App Router
+      testing_library: "@testing-library/react"
+      api_style: RESTful
+    backend:
+      name: Node.js
+      version: 22.12.0
+      framework: Hono
+      language: TypeScript
+      orm: Prisma
+      database: PostgreSQL
+      api_style: RESTful
+
+directory_structure:
+  root:
+    - prisma/ # Prisma関連ファイル
+    - docs/ # ドキュメント
+    - .github/workflows/ # CI/CDワークフロー
+    - .husky/ # Git hooks (テスト実行など)
+    - Makefile # 開発用コマンド
+  frontend:
+    path: frontend/
+    structure:
+      - app/ # Next.js App Router
+        subdirectories:
+          - api/ # APIルート
+          - components/ # UIコンポーネント
+            subdirectories:
+              - ui/ # shadcn/ui components (e.g., ui/Button, ui/Card)
+              - common/ # 共通コンポーネント (主にPresentational、パスカルケース、e.g., CommonButton, SearchInput)
+              - features/ # 特定の機能に紐づくコンポーネント (Containerを含む、機能ごとにディレクトリを分割、e.g., features/user/components/UserProfile)
+              - layout/ # ページレイアウト用のコンポーネント (e.g., layout/PageLayout)
+          - layout.tsx # ルートレイアウト
+          - page.tsx # トップページ
+      - public/ # 静的ファイル
+      - styles/ # スタイル
+      - tests/ # フロントエンドテスト
+        subdirectories:
+          - e2e/
+          - unit/
+          - integration/
+      - lib/ # ユーティリティ
+        subdirectories:
+          - utils.ts # 汎用ユーティリティ関数
+          - styles.ts # スタイル関連のユーティリティ関数 (cn, cvaなど)
+          - types.ts # 型定義
+  backend:
+    path: backend/
+    structure:
+      - src/
+        subdirectories:
+          - controllers/ # リクエスト処理
+          - models/ # データモデル
+          - routes/ # ルーティング定義
+          - services/ # ビジネスロジック
+          - middlewares/ # ミドルウェア
+          - schemas/ # データベーススキーマ
+      - tests/ # バックエンドテスト
+
+component_design:
+  principle: Atomic Design
+  base_path: frontend/app/components
+  ui_library: shadcn/ui
+  ui_library_customization: |
+    shadcn/uiのコンポーネントをカスタマイズする場合は、ui/ディレクトリ内の該当コンポーネントをコピーし、
+    必要な変更を加えた上で、common/ディレクトリに配置する。
+    コンポーネント名はパスカルケースとし、ファイル名はコンポーネント名と同じにする (例: common/CommonButton.tsx)。
+  naming_convention:
+    - ディレクトリ: ケバブケース (例: user-profile)
+    - ファイル: ui/ ディレクトリ以下はケバブケース (例: button.tsx)、それ以外はパスカルケース (例: CommonButton.tsx)
+    - コンポーネント: パスカルケース (例: UserProfile)
+  component_structure:
+    atoms:
+      - name: Button
+        type: presentational
+        path: ui/button.tsx
+        description: ボタンコンポーネント (shadcn/uiのButtonをそのまま使用)
+        ai_instruction: |
+          タスク1: このコンポーネントのReact関数コンポーネントを`frontend/app/components/ui/button.tsx`に作成してください。
+          入力: このYAMLドキュメントの`component_design.component_structure.atoms.Button`セクション
+          出力: `frontend/app/components/ui/button.tsx`ファイル
+          依存関係: なし
+          具体的な手順:
+            1. `frontend/app/components/ui/button.tsx`ファイルを作成します。
+            2. 以下のコードをファイルにコピーします。
+              ```tsx
+              import { Button } from '@/components/ui/button';
+              import { cn } from '@/lib/styles';
+
+              type ButtonProps = React.ComponentProps<typeof Button>;
+
+              const CustomButton: React.FC<ButtonProps> = ({ className, children, ...props }) => {
+                return (
+                  <Button className={cn(className)} {...props}>
+                    {children}
+                  </Button>
+                );
+              };
+
+              export default CustomButton;
+              ```
+            3. `Button`コンポーネントと`ButtonProps`型をshadcn/uiからインポートします。
+            4. `cn`関数を`@/lib/styles`からインポートします。
+            5. `CustomButton`コンポーネントを定義し、propsをButtonProps型で定義します。
+            6. `CustomButton`コンポーネントをエクスポートします。
+
+          タスク2: このコンポーネントのユニットテストを`frontend/tests/unit/ui/button.test.tsx`に作成してください。
+          入力: 作成した`frontend/app/components/ui/button.tsx`ファイル
+          出力: `frontend/tests/unit/ui/button.test.tsx`ファイル
+          依存関係: `@testing-library/react`
+          具体的な手順:
+            1. `frontend/tests/unit/ui/button.test.tsx`ファイルを作成します。
+            2. 以下のテストケースを含むファイルを生成します。
+              - コンポーネントが正しくレンダリングされること
+              - `variant` propに応じたスタイルが適用されること (例: "primary", "secondary")
+              - `onClick` propで渡された関数がクリック時に実行されること
+        storybook: true
+        props:
+          - name: variant
+            type: '"default" | "secondary" | "destructive" | "outline" | "ghost" | "link"'
+            description: ボタンのスタイル
+          - name: size
+            type: '"default" | "sm" | "lg" | "icon"'
+            description: ボタンのサイズ
+          - name: onClick
+            type: "() => void"
+            description: クリック時のイベントハンドラ
+          - name: className
+            type: string
+            description: 外部から適用するスタイル
+      - name: Input
+        type: presentational
+        path: ui/input.tsx
+        description: テキスト入力フィールド (shadcn/uiのInputをそのまま使用)
+        ai_instruction: |
+          タスク1: このコンポーネントのReact関数コンポーネントを`frontend/app/components/ui/input.tsx`に作成してください。
+          入力: このYAMLドキュメントの`component_design.component_structure.atoms.Input`セクション
+          出力: `frontend/app/components/ui/input.tsx`ファイル
+          依存関係: なし
+          具体的な手順:
+            1. `frontend/app/components/ui/input.tsx`ファイルを作成します。
+            2. 以下のコードをファイルにコピーします。
+              ```tsx
+              import { Input } from '@/components/ui/input';
+              import { cn } from '@/lib/styles';
+
+              type InputProps = React.ComponentProps<typeof Input>;
+
+              const CustomInput: React.FC<InputProps> = ({ className, ...props }) => {
+                return <Input className={cn('...', className)} {...props} />;
+              };
+
+              export default CustomInput;
+              ```
+            3. `Input`コンポーネントと`InputProps`型をshadcn/uiからインポートします。
+            4. `cn`関数を`@/lib/styles`からインポートします。
+            5. `CustomInput`コンポーネントを定義し、propsをInputProps型で定義します。
+            6. `CustomInput`コンポーネントをエクスポートします。
+
+          タスク2: このコンポーネントのユニットテストを`frontend/tests/unit/ui/input.test.tsx`に作成してください。
+          入力: 作成した`frontend/app/components/ui/input.tsx`ファイル
+          出力: `frontend/tests/unit/ui/input.test.tsx`ファイル
+          依存関係: `@testing-library/react`
+          具体的な手順:
+            1. `frontend/tests/unit/ui/input.test.tsx`ファイルを作成します。
+            2. 以下のテストケースを含むファイルを生成します。
+              - コンポーネントが正しくレンダリングされること
+              - `placeholder` propが表示されること
+              - `value` propが初期値として設定されること
+              - `onChange` propで渡された関数が入力時に実行されること
+        storybook: true
+        props:
+          - name: type
+            type: string
+            description: インプットのタイプ
+          - name: placeholder
+            type: string
+            description: プレースホルダー
+          - name: value
+            type: string
+            description: インプットの値
+          - name: onChange
+            type: "(e: React.ChangeEvent<HTMLInputElement>) => void"
+            description: 値変更時のイベントハンドラ
+          - name: className
+            type: string
+            description: 外部から適用するスタイル
+    molecules:
+      - name: SearchInput
+        type: presentational
+        path: common/SearchInput.tsx
+        description: 検索用のインプットコンポーネント
+        ai_instruction: |
+          タスク1: 依存するAtomコンポーネント (`Input`, `Button`) が存在することを確認してください。存在しない場合は、先にそれらのコンポーネントを生成してください。
+
+          タスク2: このコンポーネントのReact関数コンポーネントを`frontend/app/components/common/SearchInput.tsx`に作成してください。
+          入力: このYAMLドキュメントの`component_design.component_structure.molecules.SearchInput`セクション
+          出力: `frontend/app/components/common/SearchInput.tsx`ファイル
+          依存関係: `frontend/app/components/ui/button.tsx`, `frontend/app/components/ui/input.tsx`
+          具体的な手順:
+            1. `frontend/app/components/common/SearchInput.tsx`ファイルを作成します。
+            2. 以下のコードをファイルにコピーします。
+              ```tsx
+              import CustomInput from '@/components/ui/input';
+              import CustomButton from '@/components/ui/button';
+              import { cn } from '@/lib/styles';
+
+              type SearchInputProps = {
+                value: string;
+                onChange: (value: string) => void;
+                className?: string;
+              };
+
+              const SearchInput: React.FC<SearchInputProps> = ({ value, onChange, className }) => {
+                return (
+                  <div className={cn('flex items-center', className)}>
+                    <CustomInput type="text" value={value} onChange={(e) => onChange(e.target.value)} className="mr-2" placeholder="検索..." />
+                    <CustomButton>検索</CustomButton>
+                  </div>
+                );
+              };
+
+              export default SearchInput;
+              ```
+            3. `CustomInput`コンポーネントを`@/components/ui/input`からインポートします。
+            4. `CustomButton`コンポーネントを`@/components/ui/button`からインポートします。
+            5. `cn`関数を`@/lib/styles`からインポートします。
+            6. `SearchInputProps`型を定義します。
+            7. `SearchInput`コンポーネントを`SearchInputProps`型を使って定義します。
+            8. `SearchInput`コンポーネントをエクスポートします。
+
+          タスク3: このコンポーネントのユニットテストを`frontend/tests/unit/common/SearchInput.test.tsx`に作成してください。
+          入力: 作成した`frontend/app/components/common/SearchInput.tsx`ファイル
+          出力: `frontend/tests/unit/common/SearchInput.test.tsx`ファイル
+          依存関係: `@testing-library/react`
+          具体的な手順:
+            1. `frontend/tests/unit/common/SearchInput.test.tsx`ファイルを作成します。
+            2. 以下のテストケースを含むファイルを生成します。
+              - コンポーネントが正しくレンダリングされること
+              - `Input`コンポーネントに渡される`value`と`onChange`のpropsが正しく連携していること
+              - `Button`コンポーネントが表示されていること
+              - スナップショットテスト
+        storybook: true
+        props:
+          - name: value
+            type: string
+            description: インプットの値
+          - name: onChange
+            type: "(value: string) => void"
+            description: 値変更時のイベントハンドラ
+          - name: className
+            type: string
+            description: 外部から適用するスタイル
+        dependencies:
+          - atoms/Input
+          - atoms/Button
+    organisms:
+      - name: Header
+        type: presentational
+        path: common/Header.tsx
+        description: ページ上部のヘッダーコンポーネント
+        ai_instruction: |
+          タスク1: 依存するMoleculeコンポーネント (`SearchInput`) が存在することを確認してください。存在しない場合は、先にそのコンポーネントを生成してください。
+
+          タスク2: このコンポーネントのReact関数コンポーネントを`frontend/app/components/common/Header.tsx`に作成してください。
+          入力: このYAMLドキュメントの`component_design.component_structure.organisms.Header`セクション
+          出力: `frontend/app/components/common/Header.tsx`ファイル
+          依存関係: `frontend/app/components/common/SearchInput.tsx`, `frontend/app/components/common/UserMenu.tsx`
+          具体的な手順:
+            1. `frontend/app/components/common/Header.tsx`ファイルを作成します。
+            2. 以下のコードをファイルにコピーします。
+              ```tsx
+              import SearchInput from '@/components/common/SearchInput';
+              import UserMenu from '@/components/common/UserMenu';
+              import { cn } from '@/lib/styles';
+
+              type HeaderProps = {
+                className?: string;
+              };
+
+              const Header: React.FC<HeaderProps> = ({ className }) => {
+                return (
+                  <header className={cn('flex items-center justify-between p-4 border-b', className)}>
+                    <SearchInput value="" onChange={() => {}} />
+                    <UserMenu />
+                  </header>
+                );
+              };
+
+              export default Header;
+              ```
+            3. `SearchInput`コンポーネントを`@/components/common/SearchInput`からインポートします。
+            4. `UserMenu`コンポーネントを`@/components/common/UserMenu`からインポートします。
+            5. `cn`関数を`@/lib/styles`からインポートします。
+            6. `HeaderProps`型を定義します。
+            7. `Header`コンポーネントを`HeaderProps`型を使って定義します。
+            8. `Header`コンポーネントをエクスポートします。
+
+          タスク3: このコンポーネントのユニットテストを`frontend/tests/unit/common/Header.test.tsx`に作成してください。
+          入力: 作成した`frontend/app/components/common/Header.tsx`ファイル
+          出力: `frontend/tests/unit/common/Header.test.tsx`ファイル
+          依存関係: `@testing-library/react`
+          具体的な手順:
+            1. `frontend/tests/unit/common/Header.test.tsx`ファイルを作成します。
+            2. 以下のテストケースを含むファイルを生成します。
+              - コンポーネントが正しくレンダリングされること
+              - `SearchInput`コンポーネントが表示されていること
+              - `UserMenu`コンポーネントが表示されていること
+              - スナップショットテスト
+        storybook: true
+        dependencies:
+          - molecules/SearchInput
+          - molecules/UserMenu
+      - name: UserProfile
+        type: container
+        path: features/user/components/UserProfile.tsx
+        description: ユーザー情報を取得して表示する
+        ai_instruction: |
+          タスク1: 依存するAtomコンポーネント (`Avatar`, `Label`) とMoleculeコンポーネント (`UserData`) が存在することを確認してください。存在しない場合は、先にそれらのコンポーネントを生成してください。
+
+          タスク2: ユーザー情報を取得するAPIエンドポイント `/api/users/{userId}` の仕様 (`api_design.endpoints./users/{userId}.GET`) を確認してください。リクエストパラメータ、レスポンス形式、エラーコードなどを把握してください。
+
+          タスク3: このコンポーネントのReact関数コンポーネントを`frontend/app/components/features/user/components/UserProfile.tsx`に作成してください。
+          入力: このYAMLドキュメントの`component_design.component_structure.organisms.UserProfile`セクションおよび`api_design`セクション
+          出力: `frontend/app/components/features/user/components/UserProfile.tsx`ファイル
+          依存関係: `/api/users/{userId}` APIエンドポイント, `frontend/app/components/ui/avatar.tsx`, `frontend/app/components/ui/label.tsx`, `frontend/app/components/common/UserData.tsx`
+          具体的な手順:
+            1. `frontend/app/components/features/user/components/UserProfile.tsx`ファイルを作成します。
+            2. 以下のコードをファイルにコピーします。
+              ```tsx
+              import { useState, useEffect } from 'react';
+              import { Avatar } from '@/components/ui/avatar';
+              import { Label } from '@/components/ui/label';
+              import UserData from '@/components/common/UserData';
+              import { User } from '@/lib/types';
+
+              type UserProfileProps = {
+                userId: number;
+              };
+
+              const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
+                const [user, setUser] = useState<User | null>(null);
+                const [loading, setLoading] = useState<boolean>(true);
+                const [error, setError] = useState<string | null>(null);
+
+                useEffect(() => {
+                  const fetchUser = async () => {
+                    try {
+                      const response = await fetch(`/api/users/${userId}`);
+                      if (!response.ok) {
+                        throw new Error('ユーザー情報の取得に失敗しました');
+                      }
+                      const data = await response.json();
+                      setUser(data);
+                    } catch (error: any) {
+                      setError(error.message);
+                    } finally {
+                      setLoading(false);
+                    }
+                  };
+
+                  fetchUser();
+                }, [userId]);
+
+                if (loading) {
+                  return <div>Loading...</div>;
+                }
+
+                if (error) {
+                  return <div>Error: {error}</div>;
+                }
+
+                if (!user) {
+                  return null;
+                }
+
+                return (
+                  <div>
+                    <Avatar />
+                    <Label>{user.name}</Label>
+                    <UserData user={user} />
+                  </div>
+                );
+              };
+
+              export default UserProfile;
+              ```
+            3. 必要なモジュールをインポートします。
+            4. `UserProfileProps`型を定義します。
+            5. `UserProfile`コンポーネントを定義し、propsをUserProfileProps型で定義します。
+            6. `useState`と`useEffect`フックを使用して、ユーザー情報の取得、ローディング状態、エラー処理を実装します。
+            7. APIから取得したユーザー情報を基に、`Avatar`、`Label`、`UserData`コンポーネントを表示します。
+            8. `UserProfile`コンポーネントをエクスポートします。
+
+          タスク4: このコンポーネントのユニットテストを`frontend/tests/unit/features/user/components/UserProfile.test.tsx`に作成してください。
+          入力: 作成した`frontend/app/components/features/user/components/UserProfile.tsx`ファイル
+          出力: `frontend/tests/unit/features/user/components/UserProfile.test.tsx`ファイル
+          依存関係: `@testing-library/react`, `jest`
+          具体的な手順:
+            1. `frontend/tests/unit/features/user/components/UserProfile.test.tsx`ファイルを作成します。
+            2. `/api/users/1`へのfetchをモックし、成功時と失敗時のシナリオをテストします。
+            3. ローディング状態が正しく表示されることをテストします。
+            4. エラー発生時にエラーメッセージが表示されることをテストします。
+            5. ユーザー情報が取得できた場合に、`Avatar`、`Label`、`UserData`コンポーネントが正しくレンダリングされることをテストします。
+            6. スナップショットテスト
+        storybook: false
+        dependencies:
+          - atoms/Avatar
+          - atoms/Label
+          - molecules/UserData
+    templates:
+      - name: ListPageTemplate
+        type: container
+        path: layout/ListPageLayout.tsx
+        description: 一覧ページの基本的なレイアウトを提供するテンプレート
+        ai_instruction: |
+          タスク1: 依存するOrganismコンポーネント (`Header`, `Footer`, `Sidebar`) が存在することを確認してください。存在しない場合は、先にそれらのコンポーネントを生成してください。
+
+          タスク2: このコンポーネントのReact関数コンポーネントを`frontend/app/components/layout/ListPageLayout.tsx`に作成してください。
+          入力: このYAMLドキュメントの`component_design.component_structure.templates.ListPageTemplate`セクション
+          出力: `frontend/app/components/layout/ListPageLayout.tsx`ファイル
+          依存関係: `frontend/app/components/common/Header.tsx`, `frontend/app/components/common/Footer.tsx`, `frontend/app/components/common/Sidebar.tsx`
+          具体的な手順:
+            1. `frontend/app/components/layout/ListPageLayout.tsx`ファイルを作成します。
+            2. 以下のコードをファイルにコピーします。
+              ```tsx
+              import Header from '@/components/common/Header';
+              import Footer from '@/components/common/Footer';
+              import Sidebar from '@/components/common/Sidebar';
+
+              type ListPageLayoutProps = {
+                children: React.ReactNode;
+              };
+
+              const ListPageLayout: React.FC<ListPageLayoutProps> = ({ children }) => {
+                return (
+                  <div>
+                    <Header />
+                    <div className="flex">
+                      <Sidebar />
+                      <main className="flex-grow p-4">{children}</main>
+                    </div>
+                    <Footer />
+                  </div>
+                );
+              };
+
+              export default ListPageLayout;
+              ```
+            3. 必要なモジュールをインポートします。
+            4. `ListPageLayoutProps`型を定義します。
+            5. `ListPageLayout`コンポーネントを定義し、propsをListPageLayoutProps型で定義します。
+            6. 子要素 (`children`) を含める基本的なレイアウトを実装します。
+            7. `ListPageLayout`コンポーネントをエクスポートします。
+
+          タスク3: このコンポーネントのユニットテストを`frontend/tests/unit/layout/ListPageLayout.test.tsx`に作成してください。
+          入力: 作成した`frontend/app/components/layout/ListPageLayout.tsx`ファイル
+          出力: `frontend/tests/unit/layout/ListPageLayout.test.tsx`ファイル
+          依存関係: `@testing-library/react`
+          具体的な手順:
+            1. `frontend/tests/unit/layout/ListPageLayout.test.tsx`ファイルを作成します。
+            2. コンポーネントが正しくレンダリングされ、子要素が表示されることをテストします。
+            3. `Header`、`Sidebar`、`Footer`コンポーネントが表示されることをテストします。
+            4. スナップショットテスト
+        storybook: false
+        dependencies:
+          - organisms/Header
+          - organisms/Footer
+          - organisms/Sidebar
+
+api_design:
+  principle: RESTful
+  base_path: backend/src
+  endpoint_naming_convention: kebab-case
+  request_response_format: JSON
+  authentication:
+    method: JWT
+    token_location: Authorization header
+    secret_key_path: .env
+    implementation: |
+      ユーザーログイン時に、ユーザーIDと有効期限を含むJWTを生成し、HTTPレスポンスのAuthorizationヘッダーに設定して返します。
+      認証が必要なAPIへのリクエスト時には、AuthorizationヘッダーからJWTを取得し、検証します。
+      JWTの検証には、jsonwebtokenライブラリを使用します。
+    ai_instruction: |
+      タスク1: `jsonwebtoken`ライブラリがインストールされていることを確認してください。インストールされていない場合は、インストールしてください (`npm install jsonwebtoken`)。
+
+      タスク2: ユーザーログイン時にJWTを生成し、Authorizationヘッダーに設定して返す機能を`backend/src/controllers/auth.ts`に実装してください。
+      入力: このYAMLドキュメントの`api_design.authentication`セクション
+      出力: `backend/src/controllers/auth.ts`ファイル
+      依存関係: `backend/src/models/User.ts`, `jsonwebtoken`ライブラリ
+      具体的な手順:
+        1. `backend/src/controllers/auth.ts`ファイルを作成します。
+        2. 以下のコードをファイルに記述します。
+          ```typescript
+          import { Request, Response } from 'express';
+          import jwt from 'jsonwebtoken';
+          import { User } from '../models/User';
+
+          export const login = async (req: Request, res: Response) => {
+            const { email, password } = req.body;
+
+            // ユーザーをデータベースから検索 (Prismaを使用)
+            const user = await User.findUnique({ where: { email } });
+
+            if (!user) {
+              return res.status(401).json({ message: 'Invalid credentials' });
+            }
+
+            // パスワードの検証 (bcryptなどを使用)
+            // ...
+
+            // JWTの生成
+            const token = jwt.sign(
+              { userId: user.id, role: user.role },
+              process.env.JWT_SECRET_KEY!,
+              { expiresIn: '1h' }
+            );
+
+            // AuthorizationヘッダーにJWTを設定して返す
+            res.setHeader('Authorization', `Bearer ${token}`);
+            res.status(200).json({ message: 'Login successful' });
+          };
+          ```
+        3. 必要なモジュールをインポートします。
+        4. リクエストボディからemailとpasswordを取得します。
+        5. Prismaを使用してユーザーをデータベースから検索します。
+        6. ユーザーが存在しない場合は、401エラーを返します。
+        7. パスワードを検証します (bcryptなどのライブラリを使用)。
+        8. `jsonwebtoken`ライブラリを使用してJWTを生成します。ペイロードにはuserIdとroleを含めます。秘密鍵は`.env`ファイルから取得します。有効期限は1時間に設定します。
+        9. レスポンスヘッダーにAuthorizationを設定し、BearerスキームでJWTを送信します。
+        10. 成功メッセージとともに200ステータスコードを返します。
+
+      タスク3: `backend/tests/controllers/auth.test.ts`にこの機能の結合テストを作成してください。
+      入力: 作成した`backend/src/controllers/auth.ts`ファイル
+      出力: `backend/tests/controllers/auth.test.ts`ファイル
+      依存関係: `supertest`, `jsonwebtoken`, `prisma`
+      具体的な手順:
+        1. テスト用のデータベースを設定します。
+        2. 正常なログインシナリオをテストします。JWTが生成され、Authorizationヘッダーに含まれていることを検証します。
+        3. 無効なクレデンシャルのシナリオをテストします。401エラーが返されることを検証します。
+        4. 環境変数が正しく設定されていない場合のシナリオをテストします。
+  authorization:
+    method: RBAC
+    implementation: |
+      ユーザーにロールを割り当て、各ロールに許可されるアクションを定義します。
+      APIへのアクセス時に、ユーザーのロールとリクエストされたアクションを照合し、アクセスを許可するかどうかを判断します。
+      ロールと権限の管理には、Prismaを使用します。
+    ai_instruction: |
+      タスク1: `jsonwebtoken`ライブラリと`prisma`がインストールされていることを確認してください。
+
+      タスク2: ユーザーのロールに基づいてAPIへのアクセスを制御するミドルウェア関数を`backend/src/middlewares/auth.ts`に実装してください。
+      入力: このYAMLドキュメントの`api_design.authorization`セクション
+      出力: `backend/src/middlewares/auth.ts`ファイル
+      依存関係: `backend/src/models/User.ts`, `jsonwebtoken`ライブラリ, `prisma`
+      具体的な手順:
+        1. `backend/src/middlewares/auth.ts`ファイルを作成します。
+        2. 以下のコードをファイルに記述します。
+          ```typescript
+          import { Request, Response, NextFunction } from 'express';
+          import jwt from 'jsonwebtoken';
+          import { PrismaClient } from '@prisma/client';
+
+          const prisma = new PrismaClient();
+
+          export const authorize = (permittedRoles: string[]) => {
+            return async (req: Request, res: Response, next: NextFunction) => {
+              const authHeader = req.headers.authorization;
+
+              if (!authHeader) {
+                return res.status(401).json({ message: 'Authorization header is missing' });
+              }
+
+              const token = authHeader.split(' ')[1];
+
+              try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY!) as { userId: number, role: string };
+
+                // ユーザーをデータベースから検索 (Prismaを使用)
+                const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+
+                if (!user) {
+                  return res.status(401).json({ message: 'Invalid token' });
+                }
+
+                // ユーザーのロールが許可されたロールに含まれているかどうかを確認
+                if (!permittedRoles.includes(user.role)) {
+                  return res.status(403).json({ message: 'Forbidden' });
+                }
+
+                // リクエストオブジェクトにユーザー情報を追加
+                req.user = user;
+
+                next();
+              } catch (error) {
+                return res.status(401).json({ message: 'Invalid token' });
+              }
+            };
+          };
+          ```
+        3. 必要なモジュールをインポートします。
+        4. `authorize`という名前のミドルウェア関数を定義します。この関数は、許可されたロールの配列を引数として受け取ります。
+        5. リクエストヘッダーからAuthorizationヘッダーを取得し、存在しない場合は401エラーを返します。
+        6. JWTを抽出し、`jsonwebtoken`ライブラリを使用して検証します。秘密鍵は`.env`ファイルから取得します。
+        7. トークンが無効な場合は401エラーを返します。
+        8. JWTからuserIdを取得し、Prismaを使用してデータベースからユーザーを検索します。
+        9. ユーザーが存在しない場合は401エラーを返します。
+        10. ユーザーのロールが許可されたロールの配列に含まれているかどうかを確認します。含まれていない場合は403エラーを返します。
+        11. ユーザー情報をリクエストオブジェクトに追加し、次のミドルウェアに進みます。
+
+      タスク3: `backend/tests/middlewares/auth.test.ts`にこの機能のユニットテストを作成してください。
+      入力: 作成した`backend/src/middlewares/auth.ts`ファイル
+      出力: `backend/tests/middlewares/auth.test.ts`ファイル
+      依存関係: `jest`, `jsonwebtoken`, `prisma`
+      具体的な手順:
+        1. JWTのモックを作成します。
+        2. ユーザーのモックを作成します。
+        3. 許可されたロールを持つユーザーがAPIにアクセスできるシナリオをテストします。
+        4. 許可されていないロールを持つユーザーがAPIにアクセスできないシナリオをテストします。
+        5. JWTが存在しない場合に401エラーが返されるシナリオをテストします。
+        6. 無効なJWTが提供された場合に401エラーが返されるシナリオをテストします。
+  error_codes:
+    - code: 400
+      name: Bad Request
+      description: リクエストが不正な場合
+      response_format:
+        message: string
+        errors: array # バリデーションエラーなどの詳細情報
+    - code: 401
+      name: Unauthorized
+      description: 認証が必要な場合
+      response_format:
+        message: string
+    - code: 403
+      name: Forbidden
+      description: アクセス権限がない場合
+      response_format:
+        message: string
+    - code: 404
+      name: Not Found
+      description: リソースが見つからない場合
+      response_format:
+        message: string
+    - code: 500
+      name: Internal Server Error
+      description: サーバー内部でエラーが発生した場合
+      response_format:
+        message: string
+        error: string # 発生したエラーの詳細情報
+  api_versioning:
+    strategy: URL
+    implementation: |
+      APIのバージョンをURLに含めます (例: /api/v1/users)。
+      新しいバージョンのAPIを作成する場合は、新しいディレクトリ (例: backend/src/routes/v2) を作成し、
+      v1とは別にルーティングを定義します。
+  endpoints:
+    - path: /users
+      method: GET
+      controller: users.getAllUsers
+      ai_instruction: |
+        タスク1: ユーザー情報の一覧を取得するAPIエンドポイントを`backend/src/controllers/users.ts`に実装してください。
+        入力: このYAMLドキュメントの`api_design.endpoints./users.GET`セクション、`definitions.User`
+        出力: `backend/src/controllers/users.ts`ファイル
+        依存関係: `backend/src/models/User.ts`, `prisma`
+        具体的な手順:
+          1. `backend/src/controllers/users.ts`ファイルが存在しない場合は作成します。
+          2. 以下のコードをファイルに記述します。
+            ```typescript
+            import { Request, Response } from 'express';
+            import { PrismaClient } from '@prisma/client';
+            import { User as UserModel } from '../models/User'; // 型定義としてインポート
+
+            const prisma = new PrismaClient();
+
+            export const getAllUsers = async (req: Request, res: Response) => {
+              try {
+                const page = parseInt(req.query.page as string) || 1;
+                const limit = parseInt(req.query.limit as string) || 20;
+                const skip = (page - 1) * limit;
+
+                const users = await prisma.user.findMany({
+                  skip,
+                  take: limit,
+                });
+
+                res.status(200).json(users);
+              } catch (error: any) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal Server Error', error: error.message });
+              }
+            };
+            ```
+          3. 必要なモジュールをインポートします。
+          4. クエリパラメータから`page`と`limit`を取得し、デフォルト値を設定します。
+          5. Prismaを使用して、ページネーションを適用したユーザーリストを取得します。
+          6. 取得したユーザーリストをJSON形式でレスポンスとして返します。
+          7. エラーが発生した場合は、ログに出力し、500エラーを返します。
+
+        タスク2: `backend/tests/controllers/users.test.ts`にこの機能の結合テストを作成してください。
+        入力: 作成した`backend/src/controllers/users.ts`ファイル、`definitions.User`
+        出力: `backend/tests/controllers/users.test.ts`ファイル
+        依存関係: `supertest`, `prisma`
+        具体的な手順:
+          1. テスト用のデータベースを設定します。
+          2. 認証されたユーザーとしてAPIを呼び出すシナリオをテストします。
+          3. ページネーションが正しく動作することをテストします。
+          4. エラーが発生した場合に500エラーが返されることをテストします。
+          5. レスポンスのデータ構造が`definitions.User`で定義された型と一致することを検証します。
+
+    - path: /users/{userId}
+      method: GET
+      controller: users.getUserById
+      ai_instruction: |
+        タスク1: 特定のユーザー情報を取得するAPIエンドポイントを`backend/src/controllers/users.ts`に実装してください。
+        入力: このYAMLドキュメントの`api_design.endpoints./users/{userId}.GET`セクション、`definitions.User`
+        出力: `backend/src/controllers/users.ts`ファイル
+        依存関係: `backend/src/models/User.ts`, `prisma`
+        具体的な手順:
+          1. `backend/src/controllers/users.ts`ファイルに以下のコードを追加または修正します。
+            ```typescript
+            import { Request, Response } from 'express';
+            import { PrismaClient } from '@prisma/client';
+            import { User as UserModel } from '../models/User'; // 型定義としてインポート
+
+            const prisma = new PrismaClient();
+
+            export const getUserById = async (req: Request, res: Response) => {
+              try {
+                const userId = parseInt(req.params.userId);
+
+                const user = await prisma.user.findUnique({
+                  where: { id: userId },
+                });
+
+                if (!user) {
+                  return res.status(404).json({ message: 'User not found' });
+                }
+
+                res.status(200).json(user);
+              } catch (error: any) {
+                console.error(error);
+                res.status(500).json({ message: 'Internal Server Error', error: error.message });
+              }
+            };
+            ```
+          2. 必要なモジュールをインポートします。
+          3. リクエストパラメータから`userId`を取得します。
+          4. Prismaを使用して、指定されたIDのユーザー情報を取得します。
+          5. ユーザーが存在しない場合は、404エラーを返します。
+          6. 取得したユーザー情報をJSON形式でレスポンスとして返します。
+          7. エラーが発生した場合は、ログに出力し、500エラーを返します。
+
+        タスク2: `backend/tests/controllers/users.test.ts`にこの機能の結合テストを作成してください。
+        入力: 作成した`backend/src/controllers/users.ts`ファイル、`definitions.User`
+        出力: `backend/tests/controllers/users.test.ts`ファイル
+        依存関係: `supertest`, `prisma`
+        具体的な手順:
+          1. テスト用のデータベースを設定します。
+          2. 認証されたユーザーとしてAPIを呼び出すシナリオをテストします。
+          3. 有効なuserIdでリクエストした場合に、ユーザー情報が返されることをテストします。
+          4. 存在しないuserIdでリクエストした場合に、404エラーが返されることをテストします。
+          5. 不正なuserId形式でリクエストした場合に、適切なエラーが返されることをテストします。
+          6. レスポンスのデータ構造が`definitions.User`で定義された型と一致することを検証します。
+
+    - path: /posts
+      method: POST
+      controller: posts.createPost
+      ai_instruction: |
+        タスク1: 新しい投稿を作成するAPIエンドポイントを`backend/src/controllers/posts.ts`に実装してください。
+        入力: このYAMLドキュメントの`api_design.endpoints./posts.POST`セクション、`definitions.CreatePostRequest`, `definitions.Post`, `api_design.error_codes`
+        出力: `backend/src/controllers/posts.ts`ファイル
+        依存関係: `backend/src/models/Post.ts`, `prisma`, `zod`
+        具体的な手順:
+          1. `backend/src/controllers/posts.ts`ファイルが存在しない場合は作成します。
+          2. 以下のコードをファイルに記述します。
+            ```typescript
+            import { Request, Response } from 'express';
+            import { PrismaClient } from '@prisma/client';
+            import { z } from 'zod';
+            import { Post as PostModel } from '../models/Post'; // 型定義としてインポート
+
+            const prisma = new PrismaClient();
+
+            // リクエストボディのスキーマ定義 (Zodを使用)
+            const createPostSchema = z.object({
+              title: z.string().min(1, { message: "Title is required" }),
+              content: z.string().min(1, { message: "Content is required" }),
+              authorId: z.number().int(),
+            });
+
+            export const createPost = async (req: Request, res: Response) => {
+              try {
+                const validatedData = createPostSchema.parse(req.body);
+
+                const newPost = await prisma.post.create({
+                  data: {
+                    title: validatedData.title,
+                    content: validatedData.content,
+                    authorId: validatedData.authorId,
+                  },
+                });
+
+                res.status(201).json(newPost);
+              } catch (error) {
+                if (error instanceof z.ZodError) {
+                  return res.status(400).json({ message: 'Bad Request', errors: error.errors });
+                }
+                console.error(error);
+                res.status(500).json({ message: 'Internal Server Error', error: error.message });
+              }
+            };
+            ```
+          3. 必要なモジュールをインポートします。
+          4. `zod`ライブラリを使用してリクエストボディのバリデーションスキーマを定義します (`definitions.CreatePostRequest`を参照)。
+          5. リクエストボディをバリデーションし、エラーがあれば400エラーを返します (`api_design.error_codes`を参照)。
+          6. Prismaを使用して新しい投稿を作成します。
+          7. 作成された投稿をJSON形式でレスポンスとして返し、201ステータスコードを設定します。
+          8. バリデーションエラー以外のエラーが発生した場合は、ログに出力し、500エラーを返します。
+
+        タスク2: `backend/tests/controllers/posts.test.ts`にこの機能の結合テストを作成してください。
+        入力: 作成した`backend/src/controllers/posts.ts`ファイル、`definitions.CreatePostRequest`, `definitions.Post`, `api_design.error_codes`
+        出力: `backend/tests/controllers/posts.test.ts`ファイル
+        依存関係: `supertest`, `prisma`, `zod`
+        具体的な手順:
+          1. テスト用のデータベースを設定します。
+          2. 認証されたユーザーとしてAPIを呼び出すシナリオをテストします。
+          3. 有効なリクエストボディでリクエストした場合に、新しい投稿が作成され、レスポンスが`definitions.Post`の形式であることをテストします。
+          4. 無効なリクエストボディ（titleやcontentが空など）でリクエストした場合に、400エラーが返されることをテストします (`api_design.error_codes`を参照)。
+          5. 存在しない`authorId`でリクエストした場合に、適切なエラーが返されることをテストします。
+
+testing:
+  framework: jest
+  base_path: tests/
+  types:
+    unit:
+      target: frontend/app/components, backend/src/services, backend/src/models
+      focus: 機能を最小単位で検証する
+      mock: 外部依存性(APIコール、データベース)はモックする
+      strategy: |
+        - 関数の入力値と戻り値の組み合わせをテストする
+        - エラーケースや例外ケースをテストする
+        - 境界値テストを実施する
+      mocking_strategy: |
+        - 外部APIの呼び出しは、`jest.mock()`を使用してモックする
+        - データベースへのアクセスは、Prismaのモッククライアントを使用する
+      coverage_target: 80% # カバレッジ目標
+      ai_instruction: |
+        タスク: `frontend/app/components`ディレクトリ内の各コンポーネントに対して、ユニットテストを作成してください。
+        入力: このYAMLドキュメントの`testing.types.unit`セクション, `component_design`セクション
+        出力: `frontend/tests/unit`ディレクトリ内の各コンポーネントに対応するテストファイル
+        依存関係: `jest`, `@testing-library/react`
+        具体的な手順:
+          1. `frontend/tests/unit`ディレクトリが存在しない場合は作成します。
+          2. `component_design.component_structure`に定義された各コンポーネントについて、以下の手順を実行します。
+          3. コンポーネントのファイル名に基づいて、対応するテストファイル (`[コンポーネント名].test.tsx`) を `frontend/tests/unit/[コンポーネントのディレクトリ構造]` に作成します。
+          4. 各テストファイルに、以下のテストケースを含めてください。
+            - コンポーネントが例外なくレンダリングされること (`render`を使用)。
+            - propsが正しくコンポーネントに渡され、表示に反映されること。
+            - イベントハンドラ（onClickなど）が正しく動作すること（`fireEvent`を使用）。
+            - 必要に応じて、コンポーネントの状態変化が正しく行われること。
+          5. 外部APIの呼び出しが必要なコンポーネントについては、`jest.mock()`を使用してAPI呼び出しをモックしてください。モックする関数の戻り値は、テストケースのシナリオに合わせて設定してください。
+          6. データベースへのアクセスが必要なコンポーネント（通常はContainerコンポーネント）については、Prismaのモッククライアントを使用するか、`jest.mock()`でデータアクセス層をモックしてください。
+          7. 生成されたテストコードを実行し、カバレッジが80%以上であることを確認してください。カバレッジが低い場合は、追加のテストケースを生成してください。
+    integration:
+      target: frontend/app/api, backend/src/routes
+      focus: モジュール間の連携が正しく動作することを確認する
+      mock: データベースはモックする場合とテスト用のDBを使用する場合がある
+      strategy: |
+        - 複数のモジュールを組み合わせて、一連の処理が正しく動作することをテストする
+        - APIエンドポイントのテストでは、リクエストとレスポンスの形式が正しいことを確認する
+      mocking_strategy: |
+        - データベースへのアクセスは、テスト用のデータベースを使用する
+        - 外部APIの呼び出しは、`jest.mock()`を使用してモックする
+      coverage_target: 70%
+      ai_instruction: |
+        タスク: `frontend/app/api`ディレクトリ内の各APIルートに対して、結合テストを作成してください。
+        入力: このYAMLドキュメントの`testing.types.integration`セクション, `api_design`セクション
+        出力: `frontend/tests/integration`ディレクトリ内の各APIルートに対応するテストファイル
+        依存関係: `jest`, `@testing-library/react`, `next-test-api-route-handler`
+        具体的な手順:
+          1. `frontend/tests/integration`ディレクトリが存在しない場合は作成します。
+          2. `frontend/app/api`ディレクトリ内の各APIルートに対して、`[APIルート名].test.ts`ファイルを`frontend/tests/integration`に作成します。
+          3. 各テストファイルに、以下のテストケースを含めてください。
+            - APIエンドポイントが正しいHTTPメソッドでリクエストを受け付けること。
+            - 正しいリクエストヘッダーとボディでリクエストを送信した場合に、期待されるステータスコードが返されること。
+            - レスポンスボディが期待される形式であること (`api_design.response_format`や`definitions`を参照)。
+            - エラーレスポンスが適切なステータスコードと形式で返されること (`api_design.error_codes`を参照)。
+          4. `next-test-api-route-handler`を使ってAPIルートをテストします。リクエストパラメータ、クエリパラメータ、リクエストボディなどを適切に設定してください。
+          5. 必要に応じて、データベースの状態をセットアップ・検証するために、テスト用のデータベースを使用してください。
+          6. 外部APIの呼び出しが発生する場合は、`jest.mock()`を使用してモックしてください。
+          7. 生成されたテストコードを実行し、カバレッジが70%以上であることを確認してください。カバレッジが低い場合は、追加のテストケースを生成してください。
+    e2e:
+      target: frontend/
+      focus: ユーザーの視点でアプリケーションが正しく動作することを確認する
+      mock: 外部APIはモックするが、DBはテスト用のDBを使用する
+      framework: playwright
+      strategy: |
+        - ユーザーの操作をシミュレートして、アプリケーション全体が正しく動作することをテストする
+        - 主要なユースケースをテストする
+        - UIの表示が正しいことを確認する
+      coverage_target: 50% # E2Eテストはコストが高いため、重要なシナリオに絞る
+      ai_instruction: |
+        タスク: 主要なユースケースに対して、E2Eテストを作成してください。
+        入力: このYAMLドキュメントの`testing.types.e2e`セクション, `ai_tdd_specific.specifications` (仕様書)
+        出力: `frontend/tests/e2e`ディレクトリ内の各ユースケースに対応するテストファイル
+        依存関係: `playwright`
+        具体的な手順:
+          1. `frontend/tests/e2e`ディレクトリが存在しない場合は作成します。
+          2. `ai_tdd_specific.specifications`ディレクトリ内の仕様書を解析し、主要なユースケースを特定してください。
+          3. 各ユースケースに対して、`[ユースケース名].spec.ts`ファイルを`frontend/tests/e2e`に作成します。
+          4. 各テストファイルに、以下の手順でE2Eテストを実装してください。
+            - `playwright`の`test`関数を使用してテストケースを定義します。
+            - `page.goto()`でテスト対象のページにアクセスします。
+            - `page.locator()`でUI要素を特定し、`click()`, `fill()`などのアクションを実行してユーザーの操作をシミュレートします。
+            - `expect()`を使用して、期待されるUIの状態やデータの変化を検証します。例えば、テキストの表示、要素の存在、リダイレクトなどを検証します。
+          5. 外部APIとの連携が必要なユースケースでは、APIのモックを設定してください。
+          6. テスト用のデータベースを使用して、テストデータの準備と検証を行ってください。
+          7. 生成されたテストコードを実行し、カバレッジが50%以上であることを確認してください。特に重要なシナリオを網羅的にテストしてください。
+
+database:
+  orm: Prisma
+  schema_path: prisma/schema.prisma
+  schema: |
+    // 定義方法については別途Prismaのドキュメントを参照
+    model User {
+      id        Int      @id @default(autoincrement())
+      name      String
+      email     String   @unique
+      password  String
+      role      Role     @default(USER)
+      posts     Post[]
+      createdAt DateTime @default(now())
+      updatedAt DateTime @updatedAt
+    }
+
+    model Post {
+      id        Int      @id @default(autoincrement())
+      title     String
+      content   String
+      published Boolean  @default(false)
+      author    User     @relation(fields: [authorId], references: [id])
+      authorId  Int
+      createdAt DateTime @default(now())
+      updatedAt DateTime @updatedAt
+    }
+
+    enum Role {
+      USER
+      ADMIN
+    }
+  migration:
+    strategy: |
+      マイグレーションファイルは、`prisma migrate dev`コマンドで生成する。
+      マイグレーションファイル名は、タイムスタンプとマイグレーションの内容を簡潔に表す名前を付ける (例: 20231027123456_create_users_table.sql)。
+      マイグレーションファイルは、`prisma/migrations`ディレクトリに保存する。
+
+definitions:
+  User:
+    type: object
+    ai_instruction: これはユーザー情報です。APIのレスポンスやコンポーネントのpropsで使用されます。PrismaのUserモデルから取得します。
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      email:
+        type: string
+  Post:
+    type: object
+    ai_instruction: これは投稿情報です。APIのレスポンスやコンポーネントのpropsで使用されます。PrismaのPostモデルから取得します。
+    properties:
+      id:
+        type: integer
+      title:
+        type: string
+      content:
+        type: string
+      authorId:
+        type: integer
+  CreatePostRequest:
+    type: object
+    ai_instruction: これは投稿作成時のリクエストボディの型定義です。APIリクエスト時に使用されます。
+    properties:
+      title:
+        type: string
+      content:
+        type: string
+  ErrorResponse:
+    type: object
+    ai_instruction: エラー発生時のレスポンスボディの型定義です。APIレスポンスで使用されます。
+    properties:
+      message:
+        type: string
+      errors:
+        type: array
+        items:
+          type: string
+
+deployment:
+  branches:
+    main: production
+    develop: staging
+
+others:
+  error_handling:
+    global_handler: true
+    logging_format: JSON
+  state_management:
+    library: zustand
+    strategy: |
+      アプリケーション全体で共有する状態は、Zustandで管理します。
+      状態の更新は、create関数で作成したstoreに対して、setState関数を呼び出すことで行います。
+      状態の取得は、storeからuseStoreフックを呼び出すことで行います。
+      状態の変更は、非同期で行うことができます。
+
+design_system:
+  colors:
+    primary: "#4F46E5" # 例: インディゴ
+    secondary: "#D1D5DB" # 例: グレー
+    error: "#EF4444" # 例: レッド
+  typography:
+    font_family: "Inter, sans-serif"
+    font_sizes:
+      xs: "0.75rem"
+      sm: "0.875rem"
+      base: "1rem"
+      lg: "1.125rem"
+      xl: "1.25rem"
+      "2xl": "1.5rem"
+      "3xl": "1.875rem"
+      "4xl": "2.25rem"
+      "5xl": "3rem"
+      "6xl": "3.75rem"
+      "7xl": "4.5rem"
+      "8xl": "6rem"
+      "9xl": "8rem"
+  spacing:
+    xs: "0.25rem"
+    sm: "0.5rem"
+    base: "1rem"
+    lg: "1.5rem"
+    xl: "2rem"
+    "2xl": "2.5rem"
+    "3xl": "3rem"
+    "4xl": "4rem"
+    "5xl": "5rem"
+    "6xl": "6rem"
+    "7xl": "8rem"
+    "8xl": "10rem"
+    "9xl": "12rem"
+
+ai_tdd_specific:
+  additional_directories:
+    - specifications/ # 仕様書 (例: requirements.md, use_cases.md)
+    - design_documents/ # 設計ドキュメント (例: architecture.md, component_diagrams.md)
+  ai_instructions: | # AIに対する指示の全体的な方針
+    - 日本語で明確かつ具体的に指示すること
+    - 期待する出力形式（ファイル名、コードスニペットなど）を例示すること
+    - 制約条件（使用するライブラリのバージョン、コーディング規約など）を明示すること
+    - 不明瞭な点があれば、具体的な質問を返すように促すこと
+    - 仕様書や設計ドキュメントを参照し、それらに基づいてタスクを実行すること
+  prompt_design:
+    guidelines: |
+      - プロンプトは、AIに何をさせたいのか（タスク）を明確に記述すること
+      - プロンプトは、入力（参照するファイル、データなど）、出力（生成するファイル、コードなど）、制約条件などの要素を含めること
+      - プロンプトは、簡潔かつ明確に記述すること
+      - プロンプトは、具体的な例を含めることで、AIの理解を助けることができる
+    examples:
+      - |
+        タスク: 以下のYAMLドキュメントに記載されている{name}コンポーネントを、Reactの関数コンポーネントとして実装してください。
+        入力: component_design.component_structure.atoms.{name} の定義
+        出力: frontend/app/components/{directory}/{name}.tsx ファイル
+        制約条件: TypeScriptで記述し、Tailwind CSSを使用してスタイルを実装してください。UIライブラリは `component_design.ui_library` で指定されているものを使用してください。
+        ```yaml
+        {yaml} # YAMLドキュメントの内容をここに挿入
+        ```
+      - |
+        タスク: 以下の仕様書に基づいて、ユーザー登録APIのエンドポイントを実装してください。
+        入力: specifications/user_registration.md
+        出力: backend/src/routes/auth.ts ファイル、backend/src/controllers/auth.ts ファイル
+        制約条件: RESTful APIとして実装し、リクエストとレスポンスの形式は `api_design.request_response_format` に従ってください。エラーハンドリングは `api_design.error_codes` に定義されている形式で実装してください。
+        ```markdown
+        # ユーザー登録API仕様
+        ... (仕様書の内容)
+        ```
+  code_evaluation:
+    metrics: | # 生成されたコードの評価基準
+      - 機能性: 仕様書および設計ドキュメントに記述された要件を満たしているか
+      - 可読性: コードが明確で理解しやすい構造になっているか、命名規則に従っているか
+      - 保守性: コードが変更や拡張に容易に対応できるか、依存性が適切に管理されているか
+      - 効率性: コードのパフォーマンスは最適か、不必要な処理が含まれていないか
+      - テスト容易性: コードがユニットテストや結合テストで検証しやすい構造になっているか
+    process: | # 評価プロセス
+      1. AIが生成したコードに対し、定義されたユニットテストおよび結合テストを自動実行する。
+      2. テスト結果（成功/失敗）とカバレッジレポートを生成する。
+      3. テストが失敗した場合、またはカバレッジが目標値を下回った場合は、AIに修正を指示する。
+      4. テストが成功した場合、コードレビューツール（例：GitHub Pull Request）を用いて、コードの可読性、保守性、効率性などを人間がレビューする。
+      5. レビューで指摘事項があった場合は、AIに修正を指示する。
+  feedback_loop:
+    process: | # フィードバックループの具体的な手順
+      1. AIがYAMLファイルに基づいてコードを生成する。
+      2. 生成されたコードに対して、定義されたユニットテストおよび結合テストを自動実行する。
+      3. テスト結果（成功/失敗）とカバレッジレポートを記録する。
+      4. テストが失敗した場合、AIに対してエラーメッセージと関連するYAML定義をフィードバックし、コードの修正を指示する。
+      5. テストが成功した場合、生成されたコードに対するコードレビューを人間が行い、可読性、保守性、効率性などに関するフィードバックを記録する。
+      6. コードレビューで指摘事項があった場合、AIに対して指摘内容と関連するYAML定義をフィードバックし、コードの修正を指示する。
+      7. 必要に応じて、AIの生成結果やテスト結果、コードレビューの結果に基づいてYAMLファイルを修正し、AIの行動を調整する。
+      8. 上記のプロセスを繰り返すことで、継続的にコードの品質を向上させる。
+    improvement_cycle: 2週間 # 改善サイクル
+
+storybook:
+  include: true
+  base_path: .storybook/
+  config_path: .storybook/main.ts
+  preview_path: .storybook/preview.ts
+      
