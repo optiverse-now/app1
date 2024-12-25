@@ -1,5 +1,6 @@
+# 構造化YAML
+# このファイルの変更を禁止
 
-```yaml
 # ai-tdd-diary-app-design.yaml (構造化YAML)
 application:
   name: ai-tdd-diary-app
